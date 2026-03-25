@@ -1,13 +1,19 @@
 from flask import Flask, render_template, request,redirect
 import requests
 
-import mysql.connector as myconn
+import mysql.connector
 
-mydb=myconn.connect(host='localhost',
-                    user='root',
-                    password='Shukla@8765429862',database='Weather_history_data')
-db_cursor=mydb.cursor()
-
+try:
+    mydb = mysql.connector.connect(
+        host="ballast.proxy.rlwy.net",
+        user="root",
+        password="TDjjolWKyuFyinnbaEjlvVAkvJdRjQgs",
+        database="railway",
+        port=18353
+    )
+    db_cursor=mydb.cursor()
+except Exception as e:
+    print(e)
 
 
 app = Flask(__name__)
@@ -22,7 +28,7 @@ def home():
         if not city or city.strip() == "":
             error = "Please enter a city name!"
         else:
-            db_cursor.execute("INSERT INTO Data (city) VALUES (%s)", (city,))
+            db_cursor.execute("INSERT INTO HistoryData (city) VALUES (%s)", (city,))
             mydb.commit()
             url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric"
             response = requests.get(url).json()
@@ -35,7 +41,7 @@ def home():
                 }
             else:
                 weather_data = {"error": "City not found!"}
-    db_cursor.execute("SELECT id, city FROM Data ORDER BY id DESC")
+    db_cursor.execute("SELECT id, city FROM HistoryData ORDER BY id DESC")
     history = db_cursor.fetchall()
     print(history)
     return render_template('home.html',weather=weather_data,history=history,error=error)
@@ -43,9 +49,9 @@ def home():
 
 @app.route('/delete/<int:id>')
 def delete(id):
-    db_cursor.execute("DELETE FROM Data WHERE id = %s", (id,))
+    db_cursor.execute("DELETE FROM HistoryData WHERE id = %s", (id,))
     mydb.commit()
     return redirect('/')
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
